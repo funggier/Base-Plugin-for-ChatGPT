@@ -28,11 +28,13 @@ The base intentionally does **not** inherit LConnect's filesystem, shell, proces
 - `Start-PluginName.cmd/.ps1` — starts immediately with saved settings
 - `Status-PluginName.cmd/.ps1` — status/readiness display
 - `Stop-PluginName.cmd/.ps1` — deterministic local stop
+- `Refresh-PluginName.cmd/.ps1` — clear generated tunnel runtime/logs without touching plugin-owned persistent assets
 - `Clear-PluginNameSettings.cmd/.ps1` — clear API key, connection values, or everything
 - `scripts/PluginNameSettings.ps1` — settings, DPAPI credential and generated-profile helpers
 - `mcp-conf.example.yaml` — reference only; normal operation generates `mcp-conf.yaml` automatically
 - `tests/` — baseline tests
-- `runtime/.gitkeep` — local runtime-state directory placeholder
+- `runtime/.gitkeep` — generated tunnel/runtime state; safe to clear during refresh
+- `PluginName-runtime/.gitkeep` — persistent plugin-owned assets such as browser drivers, binaries, models, or caches that must survive refresh
 
 ## First connection
 
@@ -63,6 +65,16 @@ Start-PluginName.cmd
 Saved values are reused immediately. The wizard is not shown again unless a required value was intentionally cleared or is missing.
 
 If only the API key was cleared, the next start asks only for the API key. If only connection settings were cleared, the saved API key is reused while Tunnel ID, Organization ID and port are collected again. Clearing everything returns the template to first-run behavior.
+
+## Runtime separation
+
+Keep generated tunnel state and persistent plugin assets separate:
+
+- `runtime/` and `logs/` are disposable generated state.
+- `PluginName-runtime/` is for plugin-owned drivers, binaries, models, or caches that must survive a normal refresh.
+- `Refresh-PluginName.cmd` clears only generated state and preserves `PluginName-runtime/`, connection settings, DPAPI credentials, and `mcp-conf.yaml`.
+
+Do not place required plugin binaries under the generated `runtime/` tree. A refresh is intentionally allowed to delete that directory.
 
 ## Creating a new plugin
 

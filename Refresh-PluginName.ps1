@@ -1,0 +1,39 @@
+[CmdletBinding()]
+param()
+
+$ErrorActionPreference = 'Stop'
+$Root = $PSScriptRoot
+. (Join-Path $Root 'scripts\PluginNameSettings.ps1')
+$p = Get-PluginNamePaths -Root $Root
+
+Write-Host ''
+Write-Host '========================================'
+Write-Host ' PluginName - Offline Refresh'
+Write-Host '========================================'
+Write-Host ''
+
+if (Test-Path -LiteralPath $p.LauncherPid) {
+    $raw = (Get-Content -LiteralPath $p.LauncherPid -Raw).Trim()
+    $pidValue = 0
+    if ([int]::TryParse($raw,[ref]$pidValue)) {
+        $proc = Get-Process -Id $pidValue -ErrorAction SilentlyContinue
+        if ($proc) {
+            throw "PluginName is still running (PID $pidValue). Run Stop-PluginName.cmd first."
+        }
+    }
+}
+
+$result = Clear-PluginNameGeneratedState -Root $Root
+
+Write-Host 'Generated state cleared:'
+Write-Host '  - runtime/'
+Write-Host '  - logs/'
+Write-Host ''
+Write-Host 'Preserved:'
+Write-Host '  - local-secrets/ (settings + DPAPI credential)'
+Write-Host '  - mcp-conf.yaml'
+Write-Host '  - PluginName-runtime/ (plugin-owned drivers/binaries/cache)'
+Write-Host '  - source files and dependencies'
+Write-Host ''
+Write-Host "Persistent runtime: $($result.persistent_runtime)"
+Write-Host 'Refresh result: PASS'

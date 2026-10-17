@@ -1,6 +1,8 @@
 node_modules/
 runtime/*
 !runtime/.gitkeep
+PluginName-runtime/*
+!PluginName-runtime/.gitkeep
 logs/
 .env
 local-secrets/

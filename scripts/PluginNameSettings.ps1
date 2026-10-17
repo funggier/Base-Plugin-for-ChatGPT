@@ -4,11 +4,13 @@ function Get-PluginNamePaths {
     param([string]$Root)
     $LocalSecrets = Join-Path $Root 'local-secrets'
     $Runtime = Join-Path $Root 'runtime'
+    $PersistentRuntime = Join-Path $Root 'PluginName-runtime'
     $Logs = Join-Path $Root 'logs'
     [pscustomobject]@{
         Root = $Root
         LocalSecrets = $LocalSecrets
         Runtime = $Runtime
+        PersistentRuntime = $PersistentRuntime
         Logs = $Logs
         SettingsFile = Join-Path $LocalSecrets 'PluginName-settings.json'
         ApiKeyFile = Join-Path $LocalSecrets 'PluginName-api-key.dpapi'
@@ -116,4 +118,25 @@ mcp:
 "@
     Set-Content -LiteralPath $p.ProfileFile -Value $yaml -Encoding UTF8
     return $p.ProfileFile
+}
+
+function Clear-PluginNameGeneratedState {
+    param([Parameter(Mandatory=$true)][string]$Root)
+    $p = Get-PluginNamePaths -Root $Root
+
+    if (Test-Path -LiteralPath $p.Runtime) {
+        Remove-Item -LiteralPath $p.Runtime -Recurse -Force -ErrorAction Stop
+    }
+    if (Test-Path -LiteralPath $p.Logs) {
+        Remove-Item -LiteralPath $p.Logs -Recurse -Force -ErrorAction Stop
+    }
+
+    New-Item -ItemType Directory -Force -Path $p.Runtime,$p.Logs,$p.PersistentRuntime | Out-Null
+
+    [pscustomobject]@{
+        runtime_cleared = $true
+        logs_cleared = $true
+        persistent_runtime_preserved = $true
+        persistent_runtime = $p.PersistentRuntime
+    }
 }
