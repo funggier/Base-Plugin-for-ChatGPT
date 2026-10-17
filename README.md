@@ -61,12 +61,14 @@ The initializer is one-shot by design. After the template entry point has been r
 
 ## Core design
 
-The base provides an MCP SDK server over stdio with one `main` channel, first-run connection setup, saved connection reuse, explicit reset/refresh workflows, Windows DPAPI protection for the Runtime API key, health-port validation, tests, and an MIT License.
+The base provides an MCP SDK server over stdio with one `main` channel, first-run connection setup, saved connection reuse, explicit reset/refresh workflows, Windows DPAPI protection for the Runtime API key, health-port validation, tests, a reusable digest-only conditional read cache, and an MIT License.
 
 Only two example MCP tools are included:
 
-- `plugin_status` — read-only runtime identity pattern.
+- `plugin_status` — read-only runtime identity pattern with optional `known_digest` / `cache_max_age_ms` conditional responses.
 - `plugin_echo` — minimal parameter schema, handler, and response pattern.
+
+The conditional-read helper lives at `lib/conditional-read-cache.mjs`. It stores digest/size/timestamp metadata only; it never retains the returned content body.
 
 The base intentionally does **not** inherit LConnect's filesystem, shell, process, Git, GitHub, network, hardware, browser, or desktop-control catalog. Add only the capabilities required by the new plugin.
 
@@ -118,6 +120,21 @@ Do not place required plugin binaries under the generated `runtime/` tree.
 ## Recommended development flow
 
 Run the initializer first, then `npm install` and `npm test`. Add only the MCP tools required by the plugin. If adapting an already-connected ChatGPT plugin, preserve its existing tunnel/plugin binding when possible and change only the `main` MCP command. Re-run tests and perform a live runtime qualification before treating the plugin as complete.
+
+For read-heavy tools, adopt the context-efficiency contract deliberately instead of adding a broad transparent cache. Start with freshness-first digest comparison, then add a small TTL only where bounded staleness is acceptable. Never route write/action tools through the read cache. See [`docs/CONTEXT-EFFICIENCY.md`](docs/CONTEXT-EFFICIENCY.md) for cache-key design, safety boundaries, test requirements, metrics, schema-refresh qualification, and the broader compact/delta/lazy-loading roadmap.
+
+## Context-efficiency baseline
+
+`plugin_status` demonstrates the recommended minimum contract:
+
+- first call returns the complete result plus `result_digest_sha256`;
+- caller may send that digest back as `known_digest`;
+- `cache_max_age_ms: 0` revalidates the real read and suppresses an unchanged body;
+- a small positive TTL may skip a safe read when matching digest metadata is still fresh;
+- response metadata distinguishes `cache_hit`, `execution_skipped`, and fresh revalidation;
+- cache storage remains metadata-only and bounded.
+
+This reduces repeated MCP payload/context and can also avoid repeated safe reads. It does not imply a fixed reduction in ChatGPT/Codex plan quota because quota accounting is outside the plugin.
 
 ## Security baseline
 
