@@ -1,9 +1,11 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { z } from "zod";
 import { createConditionalReadCache } from "./lib/conditional-read-cache.mjs";
 
-export const PLUGIN_NAME = "PluginName";
+export const PLUGIN_NAME = "Plugin";
 export const PLUGIN_VERSION = "0.1.0";
 
 const statusCache = createConditionalReadCache();
@@ -67,7 +69,10 @@ export function createServer() {
   return server;
 }
 
-if (import.meta.url === new URL(process.argv[1], "file:///").href) {
+const modulePath = fileURLToPath(import.meta.url);
+const directRun = Boolean(process.argv[1]) && path.resolve(process.argv[1]) === path.resolve(modulePath);
+
+if (directRun) {
   const server = createServer();
   console.error(PLUGIN_NAME + " " + PLUGIN_VERSION + " starting");
   await server.connect(new StdioServerTransport());

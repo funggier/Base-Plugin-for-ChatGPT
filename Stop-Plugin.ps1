@@ -3,12 +3,12 @@ param()
 
 $ErrorActionPreference = 'Stop'
 $Root = $PSScriptRoot
-. (Join-Path $Root 'scripts\PluginNameSettings.ps1')
-$p = Get-PluginNamePaths -Root $Root
+. (Join-Path $Root 'scripts\PluginSettings.ps1')
+$p = Get-PluginPaths -Root $Root
 
 Write-Host ''
 Write-Host '========================================'
-Write-Host ' PluginName - Stop'
+Write-Host ' Plugin - Stop'
 Write-Host '========================================'
 
 $ids = @()
@@ -30,4 +30,4 @@ foreach ($id in $ids) {
 }
 
 Remove-Item -LiteralPath $p.LauncherPid,$p.TunnelPid,$p.HealthUrl -Force -ErrorAction SilentlyContinue
-Write-Host 'PluginName stopped.'
+Write-Host 'Plugin stopped.'

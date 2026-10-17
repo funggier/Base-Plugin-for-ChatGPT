@@ -1,144 +1,271 @@
 # Base Plugin for ChatGPT
 
-A minimal reusable foundation for building local ChatGPT plugins through an MCP tunnel.
+A generic local MCP plugin base for ChatGPT.
 
-The repository is designed to be copied or forked for a new plugin. The uninitialized template uses a placeholder code identity in filenames, source code, configuration, tests, and package metadata. You do **not** need to rename those locations manually.
+The internal plugin identity is intentionally fixed as `Plugin`. The repository, project folder, and product built from this base may use any external name. No source-file or operator-script renaming is required.
 
-## Start here: rename the whole template in one step
+## Included
 
-Immediately after copying or forking the repository, double-click:
+- MCP server over stdio with one `main` channel
+- two example tools:
+  - `plugin_status`
+  - `plugin_echo`
+- guided local connection setup
+- saved connection reuse
+- Windows DPAPI protection for the Runtime API key
+- explicit status, stop, refresh, and reset commands
+- separated generated and persistent runtime storage
+- bounded conditional-read cache for safe read-only tools
+- automated tests
+- MIT License
 
-```text
-Initialize-Plugin.cmd
-```
+The base does not include filesystem, shell, process, desktop, browser, Git, network, hardware, or other broad control tools. Add only the capabilities required by the plugin being developed.
 
-The initializer asks for the plugin name once. For example, entering:
+## Quick start
 
-```text
-Fictionlog Writer
-```
-
-produces:
-
-```text
-Display name : Fictionlog Writer
-Code name    : FictionlogWriter
-npm slug     : fictionlog-writer
-```
-
-It then renames template files and folders, updates source/config/docs/tests/package metadata, and writes `plugin-identity.json` as a record of the selected identity.
-
-Typical path changes include:
-
-```text
-PluginName.mjs                    -> FictionlogWriter.mjs
-Setup-PluginName.cmd              -> Setup-FictionlogWriter.cmd
-Start-PluginName.cmd              -> Start-FictionlogWriter.cmd
-PluginName-runtime/               -> FictionlogWriter-runtime/
-scripts/PluginNameSettings.ps1    -> scripts/FictionlogWriterSettings.ps1
-tests/PluginName.test.mjs         -> tests/FictionlogWriter.test.mjs
-```
-
-The same identity is also replaced inside the relevant text files. Lowercase package identity is converted to an npm-safe slug, so `pluginname-chatgpt-mcp` becomes `fictionlog-writer-chatgpt-mcp` in this example.
-
-The easiest workflow is to run the initializer **before** connection setup or plugin development. It intentionally skips Git internals, `node_modules`, generated runtime/log content, secret contents, and plugin-owned persistent binary/cache contents.
-
-### Preview or automate initialization
-
-To see exactly what would change without modifying files:
-
-```powershell
-.\Initialize-Plugin.ps1 -Name "Fictionlog Writer" -Preview
-```
-
-For a scripted/non-interactive initialization:
-
-```powershell
-.\Initialize-Plugin.ps1 -Name "Fictionlog Writer" -Force
-```
-
-The initializer is one-shot by design. After the template entry point has been renamed, running it again stops with `TEMPLATE_ALREADY_INITIALIZED` instead of guessing what should be renamed.
-
-## Core design
-
-The base provides an MCP SDK server over stdio with one `main` channel, first-run connection setup, saved connection reuse, explicit reset/refresh workflows, Windows DPAPI protection for the Runtime API key, health-port validation, tests, a reusable digest-only conditional read cache, and an MIT License.
-
-Only two example MCP tools are included:
-
-- `plugin_status` — read-only runtime identity pattern with optional `known_digest` / `cache_max_age_ms` conditional responses.
-- `plugin_echo` — minimal parameter schema, handler, and response pattern.
-
-The conditional-read helper lives at `lib/conditional-read-cache.mjs`. It stores digest/size/timestamp metadata only; it never retains the returned content body.
-
-The base intentionally does **not** inherit LConnect's filesystem, shell, process, Git, GitHub, network, hardware, browser, or desktop-control catalog. Add only the capabilities required by the new plugin.
-
-## Main operator files
-
-Before initialization the operator files use the template identity. After initialization their filenames automatically use your selected code name.
-
-```text
-Initialize-Plugin.cmd/.ps1
-Setup-PluginName.cmd/.ps1
-Start-PluginName.cmd/.ps1
-Status-PluginName.cmd/.ps1
-Stop-PluginName.cmd/.ps1
-Refresh-PluginName.cmd/.ps1
-Clear-PluginNameSettings.cmd/.ps1
-```
-
-`PluginName.mjs` is the MCP entry point. `scripts/PluginNameSettings.ps1` contains connection/profile helpers. `mcp-conf.example.yaml` is reference-only because normal operation generates `mcp-conf.yaml` automatically.
-
-## First connection
-
-After initialization, install dependencies and run the renamed setup command. Using the Fictionlog Writer example:
+Install dependencies and run the tests:
 
 ```powershell
 npm install
-.\Setup-FictionlogWriter.cmd
+npm test
 ```
 
-The setup wizard asks one value at a time: Tunnel ID, Runtime API key, Organization ID, and local health port. API-key input is hidden and the stored credential is protected with Windows DPAPI. The selected health port is checked before saving, and `mcp-conf.yaml` is generated automatically.
+Configure the local connection:
 
-A supported `tunnel-client.exe` must exist in the project root before starting the tunnel.
+```text
+Setup-Plugin.cmd
+```
 
-## Normal use
+The setup wizard asks for:
 
-After setup, use the renamed Start command. Saved values are reused immediately; the setup wizard is not shown again unless a required value was intentionally cleared or is missing.
+1. Tunnel ID
+2. Runtime API key
+3. Organization ID
+4. Local health port
 
-If only the API key was cleared, the next start asks only for the API key. If connection settings were cleared, the saved API key can be reused while Tunnel ID, Organization ID, and port are collected again. Clearing everything returns the project to first-connection behavior.
+The Runtime API key is entered using hidden input and stored locally with Windows DPAPI. The selected health port is validated before it is saved.
 
-## Runtime separation
+The setup process generates the real `mcp-conf.yaml` automatically. Manual YAML editing is not required for normal use.
 
-Generated tunnel state and plugin-owned persistent assets are deliberately separated.
+Start the plugin:
 
-`runtime/` and `logs/` are disposable generated state. The renamed `PluginName-runtime/` directory is persistent plugin-owned storage for assets such as browser drivers, helper binaries, models, or caches that must survive a normal refresh.
+```text
+Start-Plugin.cmd
+```
 
-`Refresh-PluginName.cmd` clears generated `runtime/` and `logs/` only. It preserves the persistent plugin runtime, `local-secrets/`, DPAPI credentials, connection settings, `mcp-conf.yaml`, source files, and dependencies.
+Check status:
 
-Do not place required plugin binaries under the generated `runtime/` tree.
+```text
+Status-Plugin.cmd
+```
 
-## Recommended development flow
+Stop the plugin:
 
-Run the initializer first, then `npm install` and `npm test`. Add only the MCP tools required by the plugin. If adapting an already-connected ChatGPT plugin, preserve its existing tunnel/plugin binding when possible and change only the `main` MCP command. Re-run tests and perform a live runtime qualification before treating the plugin as complete.
+```text
+Stop-Plugin.cmd
+```
 
-For read-heavy tools, adopt the context-efficiency contract deliberately instead of adding a broad transparent cache. Start with freshness-first digest comparison, then add a small TTL only where bounded staleness is acceptable. Never route write/action tools through the read cache. See [`docs/CONTEXT-EFFICIENCY.md`](docs/CONTEXT-EFFICIENCY.md) for cache-key design, safety boundaries, test requirements, metrics, schema-refresh qualification, and the broader compact/delta/lazy-loading roadmap.
+## Generic identity
 
-## Context-efficiency baseline
+The base uses the following stable internal names:
 
-`plugin_status` demonstrates the recommended minimum contract:
+```text
+Plugin.mjs
+Plugin-runtime/
+scripts/PluginSettings.ps1
+Setup-Plugin.cmd/.ps1
+Start-Plugin.cmd/.ps1
+Status-Plugin.cmd/.ps1
+Stop-Plugin.cmd/.ps1
+Refresh-Plugin.cmd/.ps1
+Clear-PluginSettings.cmd/.ps1
+```
 
-- first call returns the complete result plus `result_digest_sha256`;
-- caller may send that digest back as `known_digest`;
-- `cache_max_age_ms: 0` revalidates the real read and suppresses an unchanged body;
-- a small positive TTL may skip a safe read when matching digest metadata is still fresh;
-- response metadata distinguishes `cache_hit`, `execution_skipped`, and fresh revalidation;
-- cache storage remains metadata-only and bounded.
+`Plugin.mjs` reports the MCP server name as `Plugin`.
 
-This reduces repeated MCP payload/context and can also avoid repeated safe reads. It does not imply a fixed reduction in ChatGPT/Codex plan quota because quota accounting is outside the plugin.
+Keeping these names stable makes the base simple to use and makes future updates easier to compare and integrate.
 
-## Security baseline
+## Connection lifecycle
 
-Never commit Runtime API keys, `mcp-conf.yaml`, `local-secrets/`, generated runtime state, browser profiles, or logs. The template's `.gitignore` excludes these local artifacts. Plugin-owned binaries or caches under the persistent runtime are ignored by default except for its `.gitkeep`.
+### Setup
+
+`Setup-Plugin.cmd` creates the local connection settings and generates `mcp-conf.yaml`.
+
+Saved values are preserved until they are explicitly cleared. If only part of the configuration is missing, the setup flow reuses the remaining valid values.
+
+### Start
+
+`Start-Plugin.cmd`:
+
+- loads the saved Tunnel ID, Organization ID, and health port;
+- decrypts the locally stored Runtime API key;
+- regenerates the local profile when needed;
+- runs tunnel-client configuration checks;
+- starts the tunnel.
+
+When the configuration is complete, startup proceeds without asking setup questions.
+
+### Status
+
+`Status-Plugin.cmd` reports local configuration, process state, liveness/readiness, and local health/UI endpoints.
+
+### Stop
+
+`Stop-Plugin.cmd` stops the locally tracked plugin and tunnel processes.
+
+### Refresh
+
+`Refresh-Plugin.cmd` performs an offline refresh of generated local state.
+
+It clears:
+
+- `runtime/`
+- `logs/`
+
+It preserves:
+
+- `Plugin-runtime/`
+- `local-secrets/`
+- DPAPI-protected credentials
+- connection settings
+- `mcp-conf.yaml`
+- source files
+- dependencies
+
+Stop the plugin before running a refresh.
+
+### Clear settings
+
+`Clear-PluginSettings.cmd` provides explicit reset modes:
+
+- Runtime API key only
+- connection settings only
+- all local connection/runtime state
+
+Normal use never clears settings automatically.
+
+## Runtime storage
+
+Generated state and plugin-owned persistent assets are separated intentionally.
+
+### Generated state
+
+```text
+runtime/
+logs/
+```
+
+These directories may be cleared during refresh.
+
+### Persistent plugin assets
+
+```text
+Plugin-runtime/
+```
+
+Use this directory for assets that must survive refresh, such as:
+
+- browser drivers
+- helper binaries
+- local models
+- persistent caches
+
+Do not place required persistent assets under `runtime/`.
+
+## MCP examples
+
+### plugin_status
+
+`plugin_status` returns basic runtime identity and demonstrates the conditional-read contract.
+
+Optional request fields:
+
+- `known_digest`
+- `cache_max_age_ms`
+
+The response includes SHA-256 digest metadata and can suppress an unchanged payload. A short positive TTL may also skip a safe repeated read when matching digest metadata is still fresh.
+
+### plugin_echo
+
+`plugin_echo` is a minimal example of:
+
+- an input schema
+- a tool handler
+- a text response
+
+Replace or remove the example tools as the real plugin is developed.
+
+## Context efficiency
+
+`lib/conditional-read-cache.mjs` provides a bounded metadata-only conditional-read cache for safe read-only operations.
+
+It can:
+
+- compute SHA-256 digests for returned text;
+- suppress unchanged response bodies;
+- optionally skip a safe read for a short explicit TTL;
+- distinguish fresh revalidation from cache short-circuiting;
+- retain only digest, size, and timestamp metadata;
+- bound metadata entries to avoid unbounded memory growth.
+
+Do not use this cache for write or action tools.
+
+Detailed design, safety boundaries, cache-key guidance, tests, metrics, and schema-refresh qualification are documented in:
+
+```text
+docs/CONTEXT-EFFICIENCY.md
+```
+
+## Project structure
+
+```text
+Plugin.mjs
+lib/
+  conditional-read-cache.mjs
+scripts/
+  PluginSettings.ps1
+docs/
+  CONTEXT-EFFICIENCY.md
+tests/
+Plugin-runtime/
+runtime/
+mcp-conf.example.yaml
+package.json
+```
+
+`mcp-conf.example.yaml` is a reference profile. `Setup-Plugin.cmd` generates the active ignored `mcp-conf.yaml`.
+
+## Development
+
+A practical development flow is:
+
+1. Copy or fork the repository.
+2. Keep the generic internal `Plugin` identity.
+3. Add only the MCP tools required by the project.
+4. Use conditional caching only for explicitly safe read-only tools.
+5. Run `npm test`.
+6. Configure the local tunnel with `Setup-Plugin.cmd`.
+7. Start the runtime and perform live qualification.
+8. Preserve an existing ChatGPT tunnel binding when adapting a connected plugin unless changing the binding is intentional.
+
+## Security
+
+Do not commit:
+
+- Runtime API keys
+- `mcp-conf.yaml`
+- `local-secrets/`
+- generated runtime state
+- browser/login profiles
+- runtime logs
+
+`.gitignore` excludes these local artifacts. Contents of `Plugin-runtime/` are also ignored by default except for `.gitkeep`.
+
+## Requirements
+
+- Windows for the supplied DPAPI/operator workflow
+- Node.js 20 or newer
+- supported `tunnel-client.exe` in the repository root for tunnel operation
 
 ## License
 

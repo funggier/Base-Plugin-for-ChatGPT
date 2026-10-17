@@ -4,13 +4,13 @@ param([switch]$NonInteractive)
 $ErrorActionPreference = 'Stop'
 $Root = $PSScriptRoot
 $Client = Join-Path $Root 'tunnel-client.exe'
-$Helper = Join-Path $Root 'scripts\PluginNameSettings.ps1'
+$Helper = Join-Path $Root 'scripts\PluginSettings.ps1'
 . $Helper
-$p = Get-PluginNamePaths -Root $Root
+$p = Get-PluginPaths -Root $Root
 
 Write-Host ''
 Write-Host '========================================'
-Write-Host ' PluginName - Start'
+Write-Host ' Plugin - Start'
 Write-Host '========================================'
 
 if (-not (Test-Path -LiteralPath $Client -PathType Leaf)) {
@@ -20,9 +20,9 @@ if (-not (Get-Command node -ErrorAction SilentlyContinue)) {
     throw 'Node.js was not found.'
 }
 
-$settings = Get-PluginNameSettings -Root $Root
+$settings = Get-PluginSettings -Root $Root
 $apiKey = $null
-try { $apiKey = Unprotect-PluginNameApiKey -Root $Root } catch {}
+try { $apiKey = Unprotect-PluginApiKey -Root $Root } catch {}
 
 if (-not $settings -or [string]::IsNullOrWhiteSpace($apiKey)) {
     if ($NonInteractive) {
@@ -31,11 +31,11 @@ if (-not $settings -or [string]::IsNullOrWhiteSpace($apiKey)) {
 
     Write-Host 'One or more connection values are missing.'
     Write-Host 'Only missing values will be requested; saved values will be reused.'
-    & (Join-Path $Root 'Setup-PluginName.ps1') -FillMissing
+    & (Join-Path $Root 'Setup-Plugin.ps1') -FillMissing
     if ($LASTEXITCODE -ne 0) { throw "Setup failed (exit $LASTEXITCODE)." }
 
-    $settings = Get-PluginNameSettings -Root $Root
-    $apiKey = Unprotect-PluginNameApiKey -Root $Root
+    $settings = Get-PluginSettings -Root $Root
+    $apiKey = Unprotect-PluginApiKey -Root $Root
 }
 
 if (-not $settings -or [string]::IsNullOrWhiteSpace($apiKey)) {
@@ -46,19 +46,19 @@ if (Test-Path -LiteralPath $p.LauncherPid) {
     $existingPid = (Get-Content -LiteralPath $p.LauncherPid -Raw).Trim()
     $existing = Get-Process -Id $existingPid -ErrorAction SilentlyContinue
     if ($existing) {
-        Write-Host "PluginName is already running (PID $existingPid)."
+        Write-Host "Plugin is already running (PID $existingPid)."
         Write-Host 'Saved connection settings were reused; no setup was required.'
         exit 0
     }
     Remove-Item -LiteralPath $p.LauncherPid -Force -ErrorAction SilentlyContinue
 }
 
-if (-not (Test-PluginNamePortAvailable -Port ([int]$settings.health_port))) {
-    throw "Configured health port $($settings.health_port) is in use. Run Setup-PluginName.cmd to choose another port."
+if (-not (Test-PluginPortAvailable -Port ([int]$settings.health_port))) {
+    throw "Configured health port $($settings.health_port) is in use. Run Setup-Plugin.cmd to choose another port."
 }
 
 New-Item -ItemType Directory -Force -Path $p.Runtime,$p.Logs | Out-Null
-$profile = Write-PluginNameProfile -Root $Root
+$profile = Write-PluginProfile -Root $Root
 
 $previousKey = [Environment]::GetEnvironmentVariable('CONTROL_PLANE_API_KEY','Process')
 $previousOrg = [Environment]::GetEnvironmentVariable('CONTROL_PLANE_ORGANIZATION_ID','Process')
@@ -88,12 +88,12 @@ try {
     Start-Sleep -Seconds 2
     if (-not (Get-Process -Id $proc.Id -ErrorAction SilentlyContinue)) {
         Remove-Item -LiteralPath $p.LauncherPid -Force -ErrorAction SilentlyContinue
-        throw 'PluginName exited during startup. Check logs.'
+        throw 'Plugin exited during startup. Check logs.'
     }
 
     Write-Host ''
-    Write-Host "PluginName started (PID $($proc.Id))."
-    Write-Host 'Run Status-PluginName.cmd to check readiness.'
+    Write-Host "Plugin started (PID $($proc.Id))."
+    Write-Host 'Run Status-Plugin.cmd to check readiness.'
 }
 finally {
     if ($null -eq $previousKey) { Remove-Item Env:CONTROL_PLANE_API_KEY -ErrorAction SilentlyContinue } else { $env:CONTROL_PLANE_API_KEY=$previousKey }

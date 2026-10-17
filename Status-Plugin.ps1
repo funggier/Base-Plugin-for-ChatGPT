@@ -3,18 +3,18 @@ param()
 
 $ErrorActionPreference = 'Stop'
 $Root = $PSScriptRoot
-. (Join-Path $Root 'scripts\PluginNameSettings.ps1')
-$p = Get-PluginNamePaths -Root $Root
-$settings = Get-PluginNameSettings -Root $Root
+. (Join-Path $Root 'scripts\PluginSettings.ps1')
+$p = Get-PluginPaths -Root $Root
+$settings = Get-PluginSettings -Root $Root
 
 Write-Host ''
 Write-Host '========================================'
-Write-Host ' PluginName - Status'
+Write-Host ' Plugin - Status'
 Write-Host '========================================'
 
 if (-not $settings) {
     Write-Host 'Connection settings: not configured'
-    Write-Host 'Run Setup-PluginName.cmd'
+    Write-Host 'Run Setup-Plugin.cmd'
     exit 1
 }
 

@@ -1,6 +1,6 @@
 # Context Efficiency and Conditional Read Cache
 
-This template includes a small, reusable baseline for reducing repeated MCP payloads without caching unsafe actions.
+This base includes a small reusable mechanism for reducing repeated MCP payloads without caching unsafe actions.
 
 The goal is to reduce duplicate context and optionally skip repeated **safe read-only** execution for a short, explicit TTL. This is not a general memoization layer for every tool, and it must never be treated as permission to cache mutations.
 
@@ -85,7 +85,7 @@ If object key order is not stable, canonicalize recursively before hashing.
 
 Keep the metadata cache bounded.
 
-The template defaults are:
+The default limits are:
 
 - maximum entries: 256
 - maximum accepted TTL: 300000 ms (5 minutes)
@@ -106,7 +106,7 @@ Evict old metadata entries when the limit is exceeded. Do not create an unbounde
 9. Never cache errors.
 10. Expose enough metadata to prove whether execution was skipped or freshly revalidated.
 
-`plugin_status` in `PluginName.mjs` is the minimal working example.
+`plugin_status` in `Plugin.mjs` is the minimal working example.
 
 ## Tests required before adopting the pattern
 
@@ -121,7 +121,7 @@ At minimum verify:
 - cache bounds/eviction behave as intended;
 - write/mutation tools cannot enter this cache path.
 
-The template tests cover the core helper contract. Real plugins should add tool-specific end-to-end tests.
+The base tests cover the core helper contract. Add tool-specific end-to-end tests for each real implementation.
 
 ## Measuring benefit
 

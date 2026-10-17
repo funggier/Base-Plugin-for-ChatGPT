@@ -6,19 +6,19 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $Root = $PSScriptRoot
-. (Join-Path $Root 'scripts\PluginNameSettings.ps1')
-$p = Get-PluginNamePaths -Root $Root
+. (Join-Path $Root 'scripts\PluginSettings.ps1')
+$p = Get-PluginPaths -Root $Root
 
 Write-Host ''
 Write-Host '========================================'
-Write-Host ' PluginName - Clear Settings'
+Write-Host ' Plugin - Clear Settings'
 Write-Host '========================================'
 Write-Host ''
 
 if ([string]::IsNullOrWhiteSpace($Mode)) {
     Write-Host '1. Clear API key only'
     Write-Host '2. Clear connection settings (Tunnel ID / Organization / Port)'
-    Write-Host '3. Clear ALL local PluginName settings'
+    Write-Host '3. Clear ALL local Plugin settings'
     Write-Host '0. Cancel'
     $choice = Read-Host 'Select'
     switch ($choice) {

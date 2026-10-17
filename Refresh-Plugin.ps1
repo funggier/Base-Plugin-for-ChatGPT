@@ -3,12 +3,12 @@ param()
 
 $ErrorActionPreference = 'Stop'
 $Root = $PSScriptRoot
-. (Join-Path $Root 'scripts\PluginNameSettings.ps1')
-$p = Get-PluginNamePaths -Root $Root
+. (Join-Path $Root 'scripts\PluginSettings.ps1')
+$p = Get-PluginPaths -Root $Root
 
 Write-Host ''
 Write-Host '========================================'
-Write-Host ' PluginName - Offline Refresh'
+Write-Host ' Plugin - Offline Refresh'
 Write-Host '========================================'
 Write-Host ''
 
@@ -18,12 +18,12 @@ if (Test-Path -LiteralPath $p.LauncherPid) {
     if ([int]::TryParse($raw,[ref]$pidValue)) {
         $proc = Get-Process -Id $pidValue -ErrorAction SilentlyContinue
         if ($proc) {
-            throw "PluginName is still running (PID $pidValue). Run Stop-PluginName.cmd first."
+            throw "Plugin is still running (PID $pidValue). Run Stop-Plugin.cmd first."
         }
     }
 }
 
-$result = Clear-PluginNameGeneratedState -Root $Root
+$result = Clear-PluginGeneratedState -Root $Root
 
 Write-Host 'Generated state cleared:'
 Write-Host '  - runtime/'
@@ -32,7 +32,7 @@ Write-Host ''
 Write-Host 'Preserved:'
 Write-Host '  - local-secrets/ (settings + DPAPI credential)'
 Write-Host '  - mcp-conf.yaml'
-Write-Host '  - PluginName-runtime/ (plugin-owned drivers/binaries/cache)'
+Write-Host '  - Plugin-runtime/ (plugin-owned drivers/binaries/cache)'
 Write-Host '  - source files and dependencies'
 Write-Host ''
 Write-Host "Persistent runtime: $($result.persistent_runtime)"

@@ -10,21 +10,21 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $Root = $PSScriptRoot
-$Helper = Join-Path $Root 'scripts\PluginNameSettings.ps1'
+$Helper = Join-Path $Root 'scripts\PluginSettings.ps1'
 . $Helper
 
 Write-Host ''
 Write-Host '========================================'
-Write-Host ' PluginName - Connection Setup'
+Write-Host ' Plugin - Connection Setup'
 Write-Host '========================================'
 Write-Host ''
 
-$existing = Get-PluginNameSettings -Root $Root
+$existing = Get-PluginSettings -Root $Root
 $existingApi = $null
-try { $existingApi = Unprotect-PluginNameApiKey -Root $Root } catch {}
+try { $existingApi = Unprotect-PluginApiKey -Root $Root } catch {}
 
 if ($existing -and -not $Force -and -not $FillMissing) {
-    $answer = Read-Host 'Existing PluginName connection settings found. Reconfigure them? [y/N]'
+    $answer = Read-Host 'Existing Plugin connection settings found. Reconfigure them? [y/N]'
     if ($answer -notmatch '^(?i)y(es)?$') {
         Write-Host 'Setup cancelled. Existing settings were not changed.'
         exit 0
@@ -89,7 +89,7 @@ if ($HealthPort -eq 0) {
             Write-Host '    Port must be between 1024 and 65535.'
             continue
         }
-        if (-not (Test-PluginNamePortAvailable -Port $candidate)) {
+        if (-not (Test-PluginPortAvailable -Port $candidate)) {
             Write-Host "    Port $candidate is already in use. Choose another port."
             continue
         }
@@ -103,14 +103,14 @@ elseif ($HealthPort -lt 1024 -or $HealthPort -gt 65535) {
 elseif ($FillMissing -and $existing -and [int]$existing.health_port -eq $HealthPort) {
     Write-Host "4/4 Local health port: reuse $HealthPort"
 }
-elseif (-not (Test-PluginNamePortAvailable -Port $HealthPort)) {
+elseif (-not (Test-PluginPortAvailable -Port $HealthPort)) {
     throw "HealthPort $HealthPort is already in use."
 }
 
 try {
-    $settingsPath = Save-PluginNameSettings -Root $Root -TunnelId $TunnelId -OrganizationId $OrganizationId -HealthPort $HealthPort
-    $apiPath = Protect-PluginNameApiKey -Root $Root -ApiKey $ApiKey
-    $profile = Write-PluginNameProfile -Root $Root
+    $settingsPath = Save-PluginSettings -Root $Root -TunnelId $TunnelId -OrganizationId $OrganizationId -HealthPort $HealthPort
+    $apiPath = Protect-PluginApiKey -Root $Root -ApiKey $ApiKey
+    $profile = Write-PluginProfile -Root $Root
 
     Write-Host ''
     Write-Host 'Setup result: PASS'
@@ -121,7 +121,7 @@ try {
     Write-Host "Generated profile: $profile"
     Write-Host ''
     Write-Host 'Saved values are reused automatically until you explicitly clear them.'
-    Write-Host 'Next: run Start-PluginName.cmd'
+    Write-Host 'Next: run Start-Plugin.cmd'
 }
 finally {
     Remove-Variable ApiKey, existingApi -ErrorAction SilentlyContinue

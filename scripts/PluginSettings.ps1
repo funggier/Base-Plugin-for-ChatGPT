@@ -1,10 +1,10 @@
-$script:PluginNameSettingsVersion = 1
+$script:PluginSettingsVersion = 1
 
-function Get-PluginNamePaths {
+function Get-PluginPaths {
     param([string]$Root)
     $LocalSecrets = Join-Path $Root 'local-secrets'
     $Runtime = Join-Path $Root 'runtime'
-    $PersistentRuntime = Join-Path $Root 'PluginName-runtime'
+    $PersistentRuntime = Join-Path $Root 'Plugin-runtime'
     $Logs = Join-Path $Root 'logs'
     [pscustomobject]@{
         Root = $Root
@@ -12,8 +12,8 @@ function Get-PluginNamePaths {
         Runtime = $Runtime
         PersistentRuntime = $PersistentRuntime
         Logs = $Logs
-        SettingsFile = Join-Path $LocalSecrets 'PluginName-settings.json'
-        ApiKeyFile = Join-Path $LocalSecrets 'PluginName-api-key.dpapi'
+        SettingsFile = Join-Path $LocalSecrets 'Plugin-settings.json'
+        ApiKeyFile = Join-Path $LocalSecrets 'Plugin-api-key.dpapi'
         ProfileFile = Join-Path $Root 'mcp-conf.yaml'
         LauncherPid = Join-Path $Runtime 'launcher.pid'
         TunnelPid = Join-Path $Runtime 'tunnel-client.pid'
@@ -21,7 +21,7 @@ function Get-PluginNamePaths {
     }
 }
 
-function Test-PluginNamePortAvailable {
+function Test-PluginPortAvailable {
     param([Parameter(Mandatory=$true)][int]$Port)
     try {
         $listener = [System.Net.Sockets.TcpListener]::new([System.Net.IPAddress]::Loopback, $Port)
@@ -35,12 +35,12 @@ function Test-PluginNamePortAvailable {
     }
 }
 
-function Protect-PluginNameApiKey {
+function Protect-PluginApiKey {
     param(
         [Parameter(Mandatory=$true)][string]$Root,
         [Parameter(Mandatory=$true)][string]$ApiKey
     )
-    $p = Get-PluginNamePaths -Root $Root
+    $p = Get-PluginPaths -Root $Root
     New-Item -ItemType Directory -Force -Path $p.LocalSecrets | Out-Null
     $secure = ConvertTo-SecureString $ApiKey -AsPlainText -Force
     $encrypted = ConvertFrom-SecureString $secure
@@ -48,9 +48,9 @@ function Protect-PluginNameApiKey {
     return $p.ApiKeyFile
 }
 
-function Unprotect-PluginNameApiKey {
+function Unprotect-PluginApiKey {
     param([Parameter(Mandatory=$true)][string]$Root)
-    $p = Get-PluginNamePaths -Root $Root
+    $p = Get-PluginPaths -Root $Root
     if (-not (Test-Path -LiteralPath $p.ApiKeyFile -PathType Leaf)) { return $null }
     $encrypted = (Get-Content -LiteralPath $p.ApiKeyFile -Raw).Trim()
     $secure = ConvertTo-SecureString $encrypted
@@ -59,24 +59,24 @@ function Unprotect-PluginNameApiKey {
     finally { [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($bstr) }
 }
 
-function Get-PluginNameSettings {
+function Get-PluginSettings {
     param([Parameter(Mandatory=$true)][string]$Root)
-    $p = Get-PluginNamePaths -Root $Root
+    $p = Get-PluginPaths -Root $Root
     if (-not (Test-Path -LiteralPath $p.SettingsFile -PathType Leaf)) { return $null }
     return Get-Content -LiteralPath $p.SettingsFile -Raw | ConvertFrom-Json
 }
 
-function Save-PluginNameSettings {
+function Save-PluginSettings {
     param(
         [Parameter(Mandatory=$true)][string]$Root,
         [Parameter(Mandatory=$true)][string]$TunnelId,
         [Parameter(Mandatory=$true)][string]$OrganizationId,
         [Parameter(Mandatory=$true)][int]$HealthPort
     )
-    $p = Get-PluginNamePaths -Root $Root
+    $p = Get-PluginPaths -Root $Root
     New-Item -ItemType Directory -Force -Path $p.LocalSecrets | Out-Null
     $obj = [ordered]@{
-        version = $script:PluginNameSettingsVersion
+        version = $script:PluginSettingsVersion
         tunnel_id = $TunnelId
         organization_id = $OrganizationId
         health_port = $HealthPort
@@ -86,11 +86,11 @@ function Save-PluginNameSettings {
     return $p.SettingsFile
 }
 
-function Write-PluginNameProfile {
+function Write-PluginProfile {
     param([Parameter(Mandatory=$true)][string]$Root)
-    $settings = Get-PluginNameSettings -Root $Root
-    if (-not $settings) { throw 'PluginName settings are not configured. Run Setup-PluginName.cmd first.' }
-    $p = Get-PluginNamePaths -Root $Root
+    $settings = Get-PluginSettings -Root $Root
+    if (-not $settings) { throw 'Plugin settings are not configured. Run Setup-Plugin.cmd first.' }
+    $p = Get-PluginPaths -Root $Root
     New-Item -ItemType Directory -Force -Path $p.Runtime | Out-Null
     $yaml = @"
 config_version: 1
@@ -114,15 +114,15 @@ log:
 mcp:
   commands:
     - channel: main
-      command: 'node "PluginName.mjs"'
+      command: 'node "Plugin.mjs"'
 "@
     Set-Content -LiteralPath $p.ProfileFile -Value $yaml -Encoding UTF8
     return $p.ProfileFile
 }
 
-function Clear-PluginNameGeneratedState {
+function Clear-PluginGeneratedState {
     param([Parameter(Mandatory=$true)][string]$Root)
-    $p = Get-PluginNamePaths -Root $Root
+    $p = Get-PluginPaths -Root $Root
 
     if (Test-Path -LiteralPath $p.Runtime) {
         Remove-Item -LiteralPath $p.Runtime -Recurse -Force -ErrorAction Stop
