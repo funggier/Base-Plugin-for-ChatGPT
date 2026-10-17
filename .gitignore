@@ -1,6 +1,7 @@
 node_modules/
 runtime/*
 !runtime/.gitkeep
+logs/
 .env
 local-secrets/
 mcp-conf.yaml
