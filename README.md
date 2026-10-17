@@ -2,92 +2,126 @@
 
 A minimal reusable foundation for building local ChatGPT plugins through an MCP tunnel.
 
-The template intentionally uses the literal placeholder **`PluginName`**. Copy or fork the repository, then replace `PluginName` with the identity of the new plugin.
+The repository is designed to be copied or forked for a new plugin. The uninitialized template uses a placeholder code identity in filenames, source code, configuration, tests, and package metadata. You do **not** need to rename those locations manually.
+
+## Start here: rename the whole template in one step
+
+Immediately after copying or forking the repository, double-click:
+
+```text
+Initialize-Plugin.cmd
+```
+
+The initializer asks for the plugin name once. For example, entering:
+
+```text
+Fictionlog Writer
+```
+
+produces:
+
+```text
+Display name : Fictionlog Writer
+Code name    : FictionlogWriter
+npm slug     : fictionlog-writer
+```
+
+It then renames template files and folders, updates source/config/docs/tests/package metadata, and writes `plugin-identity.json` as a record of the selected identity.
+
+Typical path changes include:
+
+```text
+PluginName.mjs                    -> FictionlogWriter.mjs
+Setup-PluginName.cmd              -> Setup-FictionlogWriter.cmd
+Start-PluginName.cmd              -> Start-FictionlogWriter.cmd
+PluginName-runtime/               -> FictionlogWriter-runtime/
+scripts/PluginNameSettings.ps1    -> scripts/FictionlogWriterSettings.ps1
+tests/PluginName.test.mjs         -> tests/FictionlogWriter.test.mjs
+```
+
+The same identity is also replaced inside the relevant text files. Lowercase package identity is converted to an npm-safe slug, so `pluginname-chatgpt-mcp` becomes `fictionlog-writer-chatgpt-mcp` in this example.
+
+The easiest workflow is to run the initializer **before** connection setup or plugin development. It intentionally skips Git internals, `node_modules`, generated runtime/log content, secret contents, and plugin-owned persistent binary/cache contents.
+
+### Preview or automate initialization
+
+To see exactly what would change without modifying files:
+
+```powershell
+.\Initialize-Plugin.ps1 -Name "Fictionlog Writer" -Preview
+```
+
+For a scripted/non-interactive initialization:
+
+```powershell
+.\Initialize-Plugin.ps1 -Name "Fictionlog Writer" -Force
+```
+
+The initializer is one-shot by design. After the template entry point has been renamed, running it again stops with `TEMPLATE_ALREADY_INITIALIZED` instead of guessing what should be renamed.
 
 ## Core design
 
-- MCP SDK server over stdio
-- one `main` MCP channel
-- two explicit example tools:
-  - `plugin_status` — read-only/runtime identity pattern
-  - `plugin_echo` — parameter schema + handler + response pattern
-- first-run connection setup without manually editing YAML
-- saved connection reuse on normal starts
-- explicit selective/all settings reset
-- Windows DPAPI protection for the Runtime API key
-- health-port availability validation
-- tests
-- MIT License
+The base provides an MCP SDK server over stdio with one `main` channel, first-run connection setup, saved connection reuse, explicit reset/refresh workflows, Windows DPAPI protection for the Runtime API key, health-port validation, tests, and an MIT License.
 
-The base intentionally does **not** inherit LConnect's filesystem, shell, process, Git, GitHub, network, hardware, browser, or desktop-control tool catalog. Add only the capabilities required by the new plugin.
+Only two example MCP tools are included:
 
-## Main files
+- `plugin_status` — read-only runtime identity pattern.
+- `plugin_echo` — minimal parameter schema, handler, and response pattern.
 
-- `PluginName.mjs` — MCP entry point and the two example tools
-- `Setup-PluginName.cmd/.ps1` — first-run/reconfiguration wizard
-- `Start-PluginName.cmd/.ps1` — starts immediately with saved settings
-- `Status-PluginName.cmd/.ps1` — status/readiness display
-- `Stop-PluginName.cmd/.ps1` — deterministic local stop
-- `Refresh-PluginName.cmd/.ps1` — clear generated tunnel runtime/logs without touching plugin-owned persistent assets
-- `Clear-PluginNameSettings.cmd/.ps1` — clear API key, connection values, or everything
-- `scripts/PluginNameSettings.ps1` — settings, DPAPI credential and generated-profile helpers
-- `mcp-conf.example.yaml` — reference only; normal operation generates `mcp-conf.yaml` automatically
-- `tests/` — baseline tests
-- `runtime/.gitkeep` — generated tunnel/runtime state; safe to clear during refresh
-- `PluginName-runtime/.gitkeep` — persistent plugin-owned assets such as browser drivers, binaries, models, or caches that must survive refresh
+The base intentionally does **not** inherit LConnect's filesystem, shell, process, Git, GitHub, network, hardware, browser, or desktop-control catalog. Add only the capabilities required by the new plugin.
+
+## Main operator files
+
+Before initialization the operator files use the template identity. After initialization their filenames automatically use your selected code name.
+
+```text
+Initialize-Plugin.cmd/.ps1
+Setup-PluginName.cmd/.ps1
+Start-PluginName.cmd/.ps1
+Status-PluginName.cmd/.ps1
+Stop-PluginName.cmd/.ps1
+Refresh-PluginName.cmd/.ps1
+Clear-PluginNameSettings.cmd/.ps1
+```
+
+`PluginName.mjs` is the MCP entry point. `scripts/PluginNameSettings.ps1` contains connection/profile helpers. `mcp-conf.example.yaml` is reference-only because normal operation generates `mcp-conf.yaml` automatically.
 
 ## First connection
 
-Place the supported `tunnel-client.exe` in the project root, install dependencies, then run:
+After initialization, install dependencies and run the renamed setup command. Using the Fictionlog Writer example:
 
 ```powershell
 npm install
-Setup-PluginName.cmd
+.\Setup-FictionlogWriter.cmd
 ```
 
-The wizard asks one value at a time:
+The setup wizard asks one value at a time: Tunnel ID, Runtime API key, Organization ID, and local health port. API-key input is hidden and the stored credential is protected with Windows DPAPI. The selected health port is checked before saving, and `mcp-conf.yaml` is generated automatically.
 
-1. Tunnel ID
-2. Runtime API key (hidden input, stored with Windows DPAPI)
-3. Organization ID
-4. Local health port
-
-The selected health port is checked before it is saved. The wizard then generates `mcp-conf.yaml` automatically.
+A supported `tunnel-client.exe` must exist in the project root before starting the tunnel.
 
 ## Normal use
 
-After setup, run:
+After setup, use the renamed Start command. Saved values are reused immediately; the setup wizard is not shown again unless a required value was intentionally cleared or is missing.
 
-```powershell
-Start-PluginName.cmd
-```
-
-Saved values are reused immediately. The wizard is not shown again unless a required value was intentionally cleared or is missing.
-
-If only the API key was cleared, the next start asks only for the API key. If only connection settings were cleared, the saved API key is reused while Tunnel ID, Organization ID and port are collected again. Clearing everything returns the template to first-run behavior.
+If only the API key was cleared, the next start asks only for the API key. If connection settings were cleared, the saved API key can be reused while Tunnel ID, Organization ID, and port are collected again. Clearing everything returns the project to first-connection behavior.
 
 ## Runtime separation
 
-Keep generated tunnel state and persistent plugin assets separate:
+Generated tunnel state and plugin-owned persistent assets are deliberately separated.
 
-- `runtime/` and `logs/` are disposable generated state.
-- `PluginName-runtime/` is for plugin-owned drivers, binaries, models, or caches that must survive a normal refresh.
-- `Refresh-PluginName.cmd` clears only generated state and preserves `PluginName-runtime/`, connection settings, DPAPI credentials, and `mcp-conf.yaml`.
+`runtime/` and `logs/` are disposable generated state. The renamed `PluginName-runtime/` directory is persistent plugin-owned storage for assets such as browser drivers, helper binaries, models, or caches that must survive a normal refresh.
 
-Do not place required plugin binaries under the generated `runtime/` tree. A refresh is intentionally allowed to delete that directory.
+`Refresh-PluginName.cmd` clears generated `runtime/` and `logs/` only. It preserves the persistent plugin runtime, `local-secrets/`, DPAPI credentials, connection settings, `mcp-conf.yaml`, source files, and dependencies.
 
-## Creating a new plugin
+Do not place required plugin binaries under the generated `runtime/` tree.
 
-1. Copy/fork this repository.
-2. Rename the repository.
-3. Replace `PluginName` in filenames/source/config with the new plugin name.
-4. Add only the MCP tools required by the new plugin.
-5. Keep the existing tunnel/plugin binding when adapting an already-connected ChatGPT plugin; change only the `main` MCP command when possible.
-6. Run `npm test` before deployment.
+## Recommended development flow
+
+Run the initializer first, then `npm install` and `npm test`. Add only the MCP tools required by the plugin. If adapting an already-connected ChatGPT plugin, preserve its existing tunnel/plugin binding when possible and change only the `main` MCP command. Re-run tests and perform a live runtime qualification before treating the plugin as complete.
 
 ## Security baseline
 
-Never commit Runtime API keys, `mcp-conf.yaml`, `local-secrets/`, runtime state, browser profiles, or logs. The template's `.gitignore` excludes these local artifacts.
+Never commit Runtime API keys, `mcp-conf.yaml`, `local-secrets/`, generated runtime state, browser profiles, or logs. The template's `.gitignore` excludes these local artifacts. Plugin-owned binaries or caches under the persistent runtime are ignored by default except for its `.gitkeep`.
 
 ## License
 
