@@ -1,0 +1,25 @@
+# Copy this file to mcp-conf.yaml and fill in your own tunnel values.
+# Keep credentials out of Git.
+
+config_version: 1
+
+control_plane:
+  base_url: "https://api.openai.com"
+  tunnel_id: "PluginName_TUNNEL_ID"
+  api_key: "env:CONTROL_PLANE_API_KEY"
+
+health:
+  listen_addr: "127.0.0.1:18010"
+  url_file: "runtime/health-url.txt"
+
+admin_ui:
+  open_browser: false
+
+log:
+  level: info
+  format: json
+
+mcp:
+  commands:
+    - channel: main
+      command: 'node "PluginName.mjs"'
