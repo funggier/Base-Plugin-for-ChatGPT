@@ -3,7 +3,7 @@
 A generic local MCP plugin base for ChatGPT.
 
 - Current version: **0.1.0**
-- Release target: **v0.1.0 — Generic MCP Plugin Baseline**
+- Release: **[v0.1.0 — Generic MCP Plugin Baseline](https://github.com/funggier/Base-Plugin-for-ChatGPT/releases/tag/v0.1.0)**
 
 The internal plugin identity is intentionally fixed as `Plugin`. The repository, project folder, and product built from this base may use any external name. No source-file or operator-script renaming is required.
 

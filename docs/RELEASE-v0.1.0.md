@@ -1,10 +1,18 @@
 # Base-Plugin-for-ChatGPT v0.1.0 Release
 
-**Status:** RELEASE CANDIDATE
+**Status:** COMPLETE / PUBLISHED
 
 ## Purpose
 
 First immutable release of the generic local MCP plugin baseline for ChatGPT.
+
+## Release identity
+
+- version: `0.1.0`
+- tag: `v0.1.0`
+- title: **Base-Plugin-for-ChatGPT v0.1.0 — Generic MCP Plugin Baseline**
+- release commit: `1ea31638749cbdde4d2234017ba0f36a2b4b1545`
+- exact-commit CI: #1 / run `39033786726` / SUCCESS
 
 ## Included
 
@@ -15,15 +23,17 @@ First immutable release of the generic local MCP plugin baseline for ChatGPT.
 - bounded digest-only conditional read cache example
 - safe `plugin_status` conditional-read contract
 - automated Node tests
+- Linux + Windows CI
 - MIT license
-
-## Release identity
-
-- version: `0.1.0`
-- tag: `v0.1.0`
-- title: **Base-Plugin-for-ChatGPT v0.1.0 — Generic MCP Plugin Baseline**
-- branch: `main`
 
 ## Qualification
 
-Release requires local tests/audit, exact pushed-commit GitHub Actions GREEN, immutable tag, release/document ZIPs and SHA-256 manifest.
+- Node tests: 12/12 PASS
+- dependency audit: 0 vulnerabilities
+- PowerShell syntax: PASS
+- exact release-commit GitHub Actions: SUCCESS
+- immutable annotated tag: PASS
+- release/document/checksum assets: PASS
+- download-back verification: 3 files / 2 manifest entries / **0 SHA-256 mismatches**
+
+Release: https://github.com/funggier/Base-Plugin-for-ChatGPT/releases/tag/v0.1.0
